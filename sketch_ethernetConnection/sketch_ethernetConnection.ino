@@ -15,10 +15,10 @@ byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 EthernetClient client;
 
 // When we is going to send to our Azure server we will use this server variable instead of the IP.
-//char server[] = "http://citybuilder.azurewebsites.net/sample/hello";
+// char server[] = "http://citybuilder.azurewebsites.net/sample/hello";
 
 // When not using Azure server, we set the ip of the server static, wich we will connect to.
-IPAddress server(192, 168, 1, 111);
+IPAddress server(192, 168, 1, 108);
 
 // Using this if we dont want to use dhcp to get ip for the Arduion board.
 IPAddress ip(192, 168, 1, 15);
@@ -47,7 +47,7 @@ void setup() {
   Serial.begin(9600);
 
   // Getting the size of the buffer.
-  bufferLength = sizeof(methodArray);
+  bufferLength = sizeof(methodStr);
 
   // Converting method string to charArray to sent.
   methodStr.toCharArray(methodArray, bufferLength);
@@ -87,7 +87,9 @@ void connectToServer() {
     Serial.println("connected");
 
     // Trying to sent method string to the server.
-    int bytesSent = client.write(methodArray, bufferLength);
+    byte bytesSent = client.write(methodArray, bufferLength);
+    // byte bytesSent = client.write(methodArray);
+    Serial.println(bytesSent);
 
   } else {
     
