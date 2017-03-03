@@ -27,7 +27,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 
 // The string of methods that this arduino is holding, and should sent to the server.
-String methodStr = "lampeSLAPAF#test123,0,0,1,0,,#test321,0,0,1,0,lampe,5";
+String methodStr = "lampe#test123,0,0,1,0,,#test321,0,0,1,0,lampe,5";
 
 // Setting up the Arduino
 void setup() {
