@@ -29,7 +29,8 @@ IPAddress subnet(255, 255, 255, 0);
 char methodArray[] = {};
 
 // The string of methods that this arduino is holding, and should sent to the server.
-String methodStr = "lampe#test123,0,0,1,0,,#test321,0,0,1,0,lampe,5";
+//String methodStr = "lampe#test123,0,0,1,0,,#test321,0,0,1,0,lampe,5";
+String methodStr = "lampe";
 
 // When we need to get buffer lengt we can store it here.
 int bufferLength;
@@ -48,7 +49,7 @@ void setup() {
 
   // Getting the size of the buffer.
   bufferLength = sizeof(methodStr);
-
+  Serial.println(bufferLength);
   // Converting method string to charArray to sent.
   methodStr.toCharArray(methodArray, bufferLength);
 
@@ -88,7 +89,7 @@ void connectToServer() {
 
     // Trying to sent method string to the server.
     byte bytesSent = client.write(methodArray, bufferLength);
-    // byte bytesSent = client.write(methodArray);
+    // Serial.println(client.write(methodArray, bufferLength));
     Serial.println(bytesSent);
 
   } else {
