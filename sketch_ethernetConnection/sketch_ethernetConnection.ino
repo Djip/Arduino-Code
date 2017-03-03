@@ -28,37 +28,18 @@ IPAddress subnet(255, 255, 255, 0);
 
 // The string of methods that this arduino is holding, and should sent to the server.
 String methodStr = "lampeSLAPAF#test123,0,0,1,0,,#test321,0,0,1,0,lampe,5";
-// String methodStr = "Lampe";
-
-// When we need to get buffer lengt we can store it here.
-byte bufferLength;
-
-// This will hold group methods.
-char methodArray[] = {};
 
 // Setting up the Arduino
 void setup() {
 
   // Starting serial
   Serial.begin(9600);
-
-  Serial.println("Checking buffer length when declared to 0");
-  Serial.println(bufferLength);
-  
+ 
   // Checking that we are inside setup.
   Serial.println("We are inside setup method!");
 
   // Just starting the ethernet port and setting mac, ip, gateway, subnetmask.
   Ethernet.begin(mac, ip, gateway, subnet);
-
-  // Getting the size of the buffer.
-  bufferLength = sizeof(methodStr);
-
-  Serial.println("Buffer length after sizeof");
-  Serial.println(bufferLength);
-  
-  // Converting method string to charArray to sent.
-  methodStr.toCharArray(methodArray, bufferLength);
 
   // If we where using dhcp we could print out the status of the lease.
   // This should be used where we begin the Ethernet.begin like this connection = Ethernet.begin();
@@ -66,55 +47,57 @@ void setup() {
   // Serial.println(connection);
 
   // Letting the Ethernet port finishing initializing before we try to do the connection. 
-  delay(5000);
+  delay(1000);
 
+  Serial.println("Trying to connect...");
   // Connecting to the server.
-  connectToServer();
+  int connectionStatus = connectToServer();
 
+  if(connectionStatus == 1) {
+
+      Serial.println("connected");
+    
+    } else if(connectionStatus == 0) {
+        Serial.println("connection failed");
+    }
+    
+  // Checking if the client connection is still open to the server, else we close it.
   if(client.available()) 
   {
-      Serial.println("Connection is OK");
-  } else {
-      Serial.println("Woops we dont have connection");
+      Serial.println("There is still connection to the server");
+  } else { 
       client.stop();
+      Serial.println("Connection Terminated");
   }
 
 }
 
 void loop() {
   
-
   //renews the IP lease - returning a byte with the following:
   //0: nothing happened
   //1: renew failed
   //2: renew success
   //3: rebind fail
   //4: rebind success
-  byte result = Ethernet.maintain();
-
-  
-  
+  byte result = Ethernet.maintain(); 
 }
 
 // The connection method when we want to connect to the server, is called inside setup().
-void connectToServer() {
-  
-  Serial.println("Trying to connect...");
+int connectToServer() {
   
   if (client.connect(server, 1000)) {
-    Serial.println("connected");
-
-    Serial.flush();
+    
     // Trying to sent method string to the server.
-    //byte bytesSent = client.write(methodArray, 6);
     byte bytesSent = client.print(methodStr);
-    // Serial.println(client.write(methodArray, bufferLength));
-    Serial.println(bytesSent);
+
+    // Returningn status on the connection.
+    return 1;
 
   } else {
     
-    // if you didn't get a connection to the server:
-    Serial.println("connection failed");
+    // Returningn status on the connection.
+    return 0; 
   
   }
 }
