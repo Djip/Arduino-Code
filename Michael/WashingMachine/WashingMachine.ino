@@ -5,6 +5,10 @@
 #include <EthernetServer.h>
 #include <EthernetUdp.h>
 
+// Controlling the dhcp maintains to run in interval
+int prevRun = 0;
+int interval = 3600000;
+
 // Defining the mac address to use for the board.
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 
@@ -65,22 +69,29 @@ void setup() {
 
 void loop() {
 
-  // Just maintaining the DHCP
-  byte dhcpResult = maintainDHCP
+  // Checking the milliseconds since the board was started.
+  int currentMilli = millis();
 
-  switch(dhcpResult) {
-      case '1':
-        Serial.println("DHCP Maintain returned: renew failed");
-      break;
-      case '2':
-        Serial.println("DHCP Maintain returned: renew success");
-      break;
-      case '3':
-        Serial.println("DHCP Maintain returned: rebind fail");
-      break;
-      case '4':
-        Serial.println("DHCP Maintain returned: rebind success");
-      break;
+  // Only check for DHCP after an hour..
+  if(currentMilli - prevRun > interval) {
+
+    // Just maintaining the DHCP
+    byte dhcpResult = maintainDHCP();
+
+    switch(dhcpResult) {
+        case '1':
+          Serial.println("DHCP Maintain returned: renew failed");
+        break;
+        case '2':
+          Serial.println("DHCP Maintain returned: renew success");
+        break;
+        case '3':
+          Serial.println("DHCP Maintain returned: rebind fail");
+        break;
+        case '4':
+          Serial.println("DHCP Maintain returned: rebind success");
+        break;
+      }  
     }
 }
 
@@ -104,9 +115,6 @@ int connectToServer() {
 }
 
 byte maintainDHCP() {
-
-  // Checking every hour
-  delay(3600000);
   
   // We want to check that the ip address given by dhcp is valid!
   // We can do this whereever we want.
