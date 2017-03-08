@@ -3,10 +3,10 @@
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 #include <LiquidCrystal.h>
-#include "Song.h"
 
 //#################-Lightshow settings
-byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B NOTE: standalone rbgled use RBG NOT RGB so we swap the order here so we don't need to worry about it later
+byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
+//NOTE: standalone rbgled uses RBG (Red Blue Green) NOT RGB (Red Green Blue) so we swap the order here so we don't need to worry about it later
 //NOTE: onbord rgb led uses RGB NOT RBG
 
 //#################-MP3 player settings
@@ -15,7 +15,28 @@ DFRobotDFPlayerMini mp3Player;
 void printDetail(uint8_t type, int value);
 
 //#################-Songs
-Song s[3]; //Test
+Song songs[3] = 
+{
+	{
+		"Spyro A Heros Tail", //name
+		"Coastal Remains", //info / also used for long names
+		2, //mins
+		56 //secs
+	},
+	{
+		"Rock And Roll",
+		"Mcdonalds",
+		2,
+		22
+	},
+	{
+		"Rayman 2",
+		"The Woods Of Light",
+		3,
+		39
+	},
+};
+
 //#################-LCD
 /*
 Arduino - LCD
@@ -295,22 +316,5 @@ void loopMp3(bool loop)
 	}
 }
 
-void initSongs()
-{
-	s[0].SetSongName("Spyro A Heros Tail");
-	s[0].SetSongInfo("Coastal Remains");
-	s[0].SetSongLengthMinutes(2);
-	s[0].SetSongLengthSeconds(56);
-
-	s[1].SetSongName("Rock And Roll");
-	s[1].SetSongInfo("Mcdonalds");
-	s[1].SetSongLengthMinutes(2);
-	s[1].SetSongLengthSeconds(22);
-
-	s[2].SetSongName("Rayman 2");
-	s[2].SetSongInfo("The Woods Of Light");
-	s[2].SetSongLengthMinutes(3);
-	s[2].SetSongLengthSeconds(39);
-}
 //------------------------------------------------Net Code
 
