@@ -5,7 +5,7 @@
 #include <LiquidCrystal.h>
 
 //#################-Lightshow settings
-byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
+const byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
 //NOTE: standalone rbgled uses RBG (Red Blue Green) NOT RGB (Red Green Blue) so we swap the order here so we don't need to worry about it later
 //NOTE: onbord rgb led uses RGB NOT RBG
 
@@ -54,16 +54,15 @@ LiquidCrystal lcd(31, 33, 35, 37, 39, 41);
 void setup()
 {
 	Serial.begin(4800); //The mp3player use 9600 so we stick to 4800
-	Serial.println("Now starting!");
 
 	initMP3();
 	initLCD();
 	rgbLedSetup();
 
 	//Startup mp3
-	setMp3Volume(15); //defult 26
+	setMp3Volume(1); //defult 26
 	loopMp3(true);
-	//StartNewPlayback(3);
+	StartNewPlayback(1);
 }
 
 void loop()
@@ -74,9 +73,9 @@ void loop()
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
 
-	lightShow01(350,60);
-	lightShow02(350, 60);
-	lightShow03(200);
+	//lightShow01(350,60);
+	//lightShow02(350, 60);
+	//lightShow03(200);
 }
 
 //------------------------------------------------Light Code
@@ -246,7 +245,7 @@ void initLCD()
 	//lcd.begin(16, 2); //small LCD
 	lcd.begin(20, 4); // big LCD
 	// Print a message to the LCD.
-	//F() saves sram by keeping strings in main memory only
+	//F() saves SRAM by keeping strings in main program memory only
 	lcd.print(F("     LCD Online"));
 	lcd.setCursor(0, 1);
 	lcd.print(F(" Awaiting input..."));
@@ -256,14 +255,24 @@ void initLCD()
 	lcd.print(millis());
 }
 
-void LCDUpdateText(String text)
+void LCDUpdateText(byte song)
 {
+	song = song - 1; //The mp3 player does not accept '0' as a song
+	//but since the song data are indexed in a array we need to match that index
 
+	lcd.clear();
+	lcd.setCursor(0, 0);
+	lcd.print(songs[song].GetSongName());
+	lcd.setCursor(0, 1);
+	lcd.print(songs[song].GetSongInfo());
+	lcd.setCursor(0, 2);
+	lcd.print(songs[song].GetSongLength());
 }
 
 void LCDUpdateTime(byte time)
 {
 	lcd.setCursor(0, 3);
+	lcd.print(""); // time code here
 }
 
 //------------------------------------------------MP3 Code
@@ -347,11 +356,12 @@ void initMP3 ()
 	mp3Player.EQ(DFPLAYER_EQ_NORMAL); //DFPLAYER_EQ_NORMAL DFPLAYER_EQ_POP DFPLAYER_EQ_ROCK DFPLAYER_EQ_JAZZ DFPLAYER_EQ_CLASSIC DFPLAYER_EQ_BASS
 }
 
-//TODO: review
-void StartNewPlayback( byte songNr) //return songNr for use LCD?
+void StartNewPlayback(byte songNr)
 {
 	mp3Player.stop(); //stop current song
 	mp3Player.play(songNr);  //Play the given mp3 in the "mp3" folder (etc: 0001 = 1, 0002 = 2)
+
+	LCDUpdateText(songNr);
 }
 
 void setMp3Volume(byte vol)
