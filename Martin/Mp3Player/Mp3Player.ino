@@ -54,6 +54,7 @@ LiquidCrystal lcd(31, 33, 35, 37, 39, 41);
 void setup()
 {
 	Serial.begin(4800); //The mp3player use 9600 so we stick to 4800
+	Serial.println("Now starting!");
 
 	initMP3();
 	initLCD();
@@ -73,8 +74,9 @@ void loop()
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
 
-	//lightShow01(350, 60);
-	//lightShow02(350, 60);
+	lightShow01(350,60);
+	lightShow02(350, 60);
+	lightShow03(200);
 }
 
 //------------------------------------------------Light Code
@@ -87,8 +89,7 @@ void rgbLedSetup()
 	}
 }
 
-//controls color for the first rgb led
-//NOTE: on standalone rgb leds green is weak
+//controls color for the set of rgbs
 void setColor1(byte red, byte green, byte blue)
 {
 	analogWrite(rgbLed[0], red);
@@ -96,7 +97,7 @@ void setColor1(byte red, byte green, byte blue)
 	analogWrite(rgbLed[2], blue);
 }
 
-//controls color for the 2ed rgb led
+//controls color for the 2ed set of rgbs
 void setColor2(byte red, byte green, byte blue)
 {
 	analogWrite(rgbLed[3], red);
@@ -107,7 +108,7 @@ void setColor2(byte red, byte green, byte blue)
 //simple show, uses the first led
 void lightShow01(byte loopLong, byte loopShort)
 {
-	int i = 0,j = 0,k = 0;
+	byte i = 0,j = 0,k = 0;
 	//use i for all?
 	//int loopLong = 350, loopShot = 60; //delay timers
 
@@ -140,10 +141,10 @@ void lightShow01(byte loopLong, byte loopShort)
 	}
 }
 
-//show off for now
-void lightShow02(byte loopLong, byte loopShort) //only for test now use 2ed leds
+//simple show, use 2ed leds
+void lightShow02(byte loopLong, byte loopShort)
 {
-	int i = 0,j = 0,k = 0;
+	byte i = 0,j = 0,k = 0;
 	//int loopLong = 350, loopShot = 60; //delay timers
 
 	//blink slow
@@ -176,10 +177,64 @@ void lightShow02(byte loopLong, byte loopShort) //only for test now use 2ed leds
 }
 
 //use both leds
-void lightShow03() // mix first and 2ed led
-{}
+void lightShow03(byte loopSpeed) // mix first and 2ed led with some rng
+{
+	byte j = 0; //loop controller
 
-//lde strip?
+	//rng stuff
+	randomSeed(analogRead(0));
+	byte rng1 = (byte)random(0 , 2);
+	randomSeed(analogRead(0));
+	byte rng2 = (byte)random(0, 2);
+	randomSeed(analogRead(0));
+	byte rng3 = (byte)random(0, 2);
+
+	//convet rng to useable rgb values
+	//use digital pins insted?
+	if (rng1 == 1)
+	{
+		rng1 = 255;
+	}
+	if (rng2 == 1)
+	{
+		rng2 = 255;
+	}
+	if (rng3 == 1)
+	{
+		rng3 = 255;
+	}
+	//make sure not all rng's are 0
+	if (rng1 == 0 && rng2 == 0 && rng3 == 0)
+	{
+		rng1 = 10, rng2 = 255, rng3 = 255;
+	}
+	//make sure not all rng's are 255
+	else if (rng1 == 255 && rng2 == 255 && rng3 == 255)
+	{
+		rng1 = 255, rng2 = 10, rng3 = 255;
+	}
+
+	//Debug
+	//Serial.println(rng1);
+	//Serial.println(rng2);
+	//Serial.println(rng3);
+	//Serial.println();
+
+	for (j; j < 20; j++)
+	{
+		setColor1(rng1, rng2, rng3);
+		setColor2(rng2, rng3, rng1);
+		delay(loopSpeed);
+		setColor1(rng3, rng1, rng2);
+		setColor2(rng1, rng2, rng3);
+		delay(loopSpeed);
+		setColor1(rng2, rng3, rng1);
+		setColor2(rng3, rng1, rng2);
+		delay(loopSpeed);
+	}
+}
+
+//led strip?
 void lightShow04() // led strip
 {}
 
