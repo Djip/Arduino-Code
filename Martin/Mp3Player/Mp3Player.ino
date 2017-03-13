@@ -295,11 +295,11 @@ void LCDUpdateTime()
 	}
 	else
 	{
-		delay(1000);
+		delay(1000); //wait one sec then update timer
 		lcd.setCursor(0, 3);
 
 		timeCodeSec++;
-		if (timeCodeSec > 59)
+		if (timeCodeSec > 59) //60 secs = 1 min
 		{
 			//So here's fun bug:
 			//just because you reset a var in the program
@@ -315,7 +315,7 @@ void LCDUpdateTime()
 			timeCodeMin++;
 		}
 
-		lcd.print(timeCodeMin), lcd.print(F(":")), lcd.print(timeCodeSec);
+		lcd.print(timeCodeMin), lcd.print(F(":")), lcd.print(timeCodeSec);// print resault as a time code ex '2:56'
 	}
 }
 
@@ -342,10 +342,11 @@ void printDetail(uint8_t type, int value){
       Serial.print(F("Number:"));
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
-	  mp3IsPlayering = false;
+	  mp3IsPlayering = false; //stop updating the time code
       break;
     case DFPlayerError:
       Serial.print(F("DFPlayerError:"));
+
       switch (value) {
         case Busy:
           Serial.println(F("Card not found"));
