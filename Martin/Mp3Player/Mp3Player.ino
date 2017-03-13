@@ -14,6 +14,8 @@ SoftwareSerial mp3Serial(10, 11); // RX, TX on the arduino that goes to the mp3 
 DFRobotDFPlayerMini mp3Player;
 void printDetail(uint8_t type, int value);
 
+bool mp3IsPlayering = false, mp3IsLooping = false;
+
 //#################-Songs
 Song songs[3] = 
 {
@@ -49,6 +51,8 @@ Arduino - LCD
 */
 //byte LCDPins[] = {31,33,35,37,39,41};
 LiquidCrystal lcd(31, 33, 35, 37, 39, 41);
+byte timeCodeMin, timeCodeSec; //used for time code
+byte currentSong;
 //------------------------------------------------Arduino stuff
 
 void setup()
@@ -61,7 +65,7 @@ void setup()
 
 	//Startup mp3
 	setMp3Volume(1); //defult 26
-	loopMp3(true);
+	loopMp3(false);
 	StartNewPlayback(1);
 }
 
@@ -72,6 +76,12 @@ void loop()
 	{
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
+
+	if (mp3IsPlayering)
+	{
+		LCDUpdateTime();
+	}
+
 
 	//lightShow01(350,60);
 	//lightShow02(350, 60);
@@ -255,6 +265,7 @@ void initLCD()
 	lcd.print(millis());
 }
 
+//TODO review
 void LCDUpdateText(byte song)
 {
 	song = song - 1; //The mp3 player does not accept '0' as a song
@@ -269,10 +280,43 @@ void LCDUpdateText(byte song)
 	lcd.print(songs[song].GetSongLength());
 }
 
-void LCDUpdateTime(byte time)
+void resetLCDTimer()
 {
-	lcd.setCursor(0, 3);
-	lcd.print(""); // time code here
+	timeCodeMin = 0, timeCodeSec = 0;
+}
+
+void LCDUpdateTime()
+{
+	if (mp3IsLooping)
+	{
+		lcd.setCursor(0, 3);
+		lcd.print(F("Song is looping"));
+		delay(1000); //avoid lcd overload
+	}
+	else
+	{
+		delay(1000);
+		lcd.setCursor(0, 3);
+
+		timeCodeSec++;
+		if (timeCodeSec > 59)
+		{
+			//So here's fun bug:
+			//just because you reset a var in the program
+			//doesn't mean the lcd will update as you expect
+			//if the var has two digets ex 22 and set the var to 0
+			//the lcd will then display 02 because the lcd only updates the blocks it need
+			//not the blocks after it
+			lcd.setCursor(3, 3);
+			lcd.print(F("               ")); //print a buntch of white space to make the lcd nice again
+			lcd.setCursor(0, 3);
+
+			timeCodeSec = 0;
+			timeCodeMin++;
+		}
+
+		lcd.print(timeCodeMin), lcd.print(F(":")), lcd.print(timeCodeSec);
+	}
 }
 
 //------------------------------------------------MP3 Code
@@ -298,6 +342,7 @@ void printDetail(uint8_t type, int value){
       Serial.print(F("Number:"));
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
+	  mp3IsPlayering = false;
       break;
     case DFPlayerError:
       Serial.print(F("DFPlayerError:"));
@@ -360,8 +405,23 @@ void StartNewPlayback(byte songNr)
 {
 	mp3Player.stop(); //stop current song
 	mp3Player.play(songNr);  //Play the given mp3 in the "mp3" folder (etc: 0001 = 1, 0002 = 2)
+	currentSong = songNr - 1;
 
 	LCDUpdateText(songNr);
+	resetLCDTimer();
+	mp3IsPlayering = true;
+}
+
+void pauseMp3Player()
+{
+	mp3Player.pause();
+	mp3IsPlayering = false;
+}
+
+void unPauseMp3Player()
+{
+	mp3Player.start();
+	mp3IsPlayering = true;
 }
 
 void setMp3Volume(byte vol)
@@ -374,10 +434,12 @@ void loopMp3(bool loop)
 	if (loop)
 	{
 		mp3Player.enableLoop(); //loop the playing mp3 file
+		mp3IsLooping = true;
 	}
 	else
 	{
 		mp3Player.disableLoop();
+		mp3IsLooping = false;
 	}
 }
 
