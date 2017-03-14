@@ -64,7 +64,7 @@ void setup()
 	rgbLedSetup();
 
 	//Startup mp3
-	setMp3Volume(1); //defult 26
+	setMp3Volume(15); //defult 26
 	loopMp3(false);
 	StartNewPlayback(1);
 }
@@ -83,9 +83,9 @@ void loop()
 	}
 
 
-	//lightShow01(350,60);
-	//lightShow02(350, 60);
-	//lightShow03(200);
+	lightShow01(350,60);
+	lightShow02(350, 60);
+	lightShow03(200);
 }
 
 //------------------------------------------------Light Code
