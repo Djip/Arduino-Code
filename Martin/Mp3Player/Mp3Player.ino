@@ -66,7 +66,7 @@ void setup()
 	//Startup mp3
 	setMp3Volume(15); //defult 26
 	loopMp3(false);
-	StartNewPlayback(1);
+	//StartNewPlayback(1);
 }
 
 void loop()
@@ -82,10 +82,9 @@ void loop()
 		LCDUpdateTime();
 	}
 
-
 	lightShow01(350,60);
-	lightShow02(350, 60);
-	lightShow03(200);
+	//lightShow02(350, 60);
+	//lightShow03(200);
 }
 
 //------------------------------------------------Light Code
@@ -115,39 +114,164 @@ void setColor2(byte red, byte green, byte blue)
 }
 
 //simple show, uses the first led
-void lightShow01(byte loopLong, byte loopShort)
+void lightShow01(int loopLong, int loopShort)
 {
+	//Serial.println("LIGHTSHOW01");
 	byte i = 0,j = 0,k = 0;
+	unsigned long ledPreviousMillis = 0;
+	unsigned long ledPreviousMillis2 = 0;
 	//use i for all?
 	//int loopLong = 350, loopShot = 60; //delay timers
 
 	//blink slow
-	for (i; i <= 2; i++)
+
+
+	//while (i <= 2)
+	//{
+	//	Serial.println("FIRST LOOP");
+
+	//	if ((unsigned long)(millis() - previousMillis) >= loopLong)
+	//	{
+	//		previousMillis = millis();
+	//		setColor1(255, 0, 0);
+
+	//		Serial.print("LOOP I: "), Serial.println(i);
+	//		Serial.print("TIMER: "), Serial.println((unsigned long)(millis() - previousMillis));
+	//		Serial.print("LONG: "), Serial.println(loopLong);
+	//		Serial.println();
+
+	//		while (j <= 2)
+	//		{
+	//			Serial.println("INNER LOOP");
+	//			Serial.print("LOOP J: "), Serial.println(j);
+	//			Serial.print("TIMER: "), Serial.println((unsigned long)(millis() - previousMillis));
+	//			Serial.print("LONG: "), Serial.println(loopLong);
+	//			Serial.println();
+
+	//			if ((unsigned long)(millis() - previousMillis) >= loopLong)
+	//			{
+	//				previousMillis = millis();
+	//				setColor1(0, 0, 255);
+	//				i = i +1;
+	//				j = j + 1;
+	//			}
+
+	//			if (j <= 2 && (unsigned long)(millis() - previousMillis) >= loopLong)
+	//			{
+	//				Serial.println("BRK");
+	//				Serial.println();
+
+	//				break;
+	//			}
+	//		}
+	//	}
+	//}
+	bool startOnFirstLight = true;
+
+	while (i <= 3)
 	{
-		setColor1(255,0,0);
-		delay(loopLong);
-		setColor1(0,0,255);
-		delay(loopLong);
+		//Serial.print("LOOP I: "), Serial.println(i);
+		//Serial.print("TIMER: "), Serial.println((unsigned long)(millis() - previousMillis));
+		//Serial.print("TIME TO MATCH: "), Serial.println(loopLong);
+		//Serial.println("RED");
+		//Serial.println();
+
+		//Serial.print("TIMER: "), Serial.println((unsigned long)(millis() - ledPreviousMillis));
+		//Serial.print("TIME TO MATCH: "), Serial.println(loopLong);
+		//Serial.println("BLUE");
+		//Serial.println();
+
+		if (startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopLong)
+		{
+			setColor1(255, 0, 0);
+			if (startOnFirstLight)
+			{
+				startOnFirstLight = false;
+				ledPreviousMillis = millis();
+			}
+		}
+		else if (!startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopLong)
+		{
+			setColor1(0, 0, 255);
+			startOnFirstLight = true;
+			ledPreviousMillis = millis();
+			i += i + 1;
+		}
+
 	}
 
-	//fast blink on/off
-	//red
-	for(j; j <= 5; j++)
+	startOnFirstLight = true;
+
+	while (j <= 7)
 	{
-		setColor1(255,0,0);
-		delay(loopShort);
-		setColor1(0,0,0);
-		delay(loopShort);
+		if (startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopShort)
+		{
+			setColor1(255, 0, 0);
+			if (startOnFirstLight)
+			{
+				startOnFirstLight = false;
+				ledPreviousMillis = millis();
+			}
+		}
+		else if (!startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopShort)
+		{
+			setColor1(0, 0, 0);
+			startOnFirstLight = true;
+			ledPreviousMillis = millis();
+			j += j + 1;
+		}
+
 	}
 
-	//blue
-	for(k; k <= 5; k++)
+	startOnFirstLight = true;
+
+	while (k <= 7)
 	{
-		setColor1(0,0,255);
-		delay(loopShort);
-		setColor1(0,0,0);
-		delay(loopShort);
+		if (startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopShort)
+		{
+			setColor1(0, 0, 255);
+			if (startOnFirstLight)
+			{
+				startOnFirstLight = false;
+				ledPreviousMillis = millis();
+			}
+		}
+		else if (!startOnFirstLight && (unsigned long)(millis() - ledPreviousMillis) >= loopShort)
+		{
+			setColor1(0, 0, 0);
+			startOnFirstLight = true;
+			ledPreviousMillis = millis();
+			k += k + 1;
+		}
+
 	}
+
+	//for (i; i <= 2; i++)
+	//{
+	//	setColor1(255,0,0);
+	//	delay(loopLong);
+	//	setColor1(0,0,255);
+	//	delay(loopLong);
+	//}
+
+	////fast blink on/off
+	////red
+	//for(j; j <= 5; j++)
+	//{
+	//	setColor1(255,0,0);
+	//	delay(loopShort);
+	//	setColor1(0,0,0);
+	//	delay(loopShort);
+	//}
+
+	////blue
+	//for(k; k <= 5; k++)
+	//{
+	//	setColor1(0,0,255);
+	//	delay(loopShort);
+	//	setColor1(0,0,0);
+	//	delay(loopShort);
+	//}
 }
 
 //simple show, use 2ed leds
