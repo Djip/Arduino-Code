@@ -1,8 +1,9 @@
-#include "Song.h"
-#include <DFRobotDFPlayerMini.h>
 #include "Arduino.h"
 #include "SoftwareSerial.h"
+#include "Song.h"
+#include <DFRobotDFPlayerMini.h>
 #include <LiquidCrystal.h>
+#include <TimedAction.h>
 
 //#################-Lightshow settings
 const byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
@@ -53,6 +54,8 @@ Arduino - LCD
 LiquidCrystal lcd(31, 33, 35, 37, 39, 41);
 byte timeCodeMin, timeCodeSec; //used for time code
 byte currentSong;
+const int LCDUpdateIntaval = 1000; // 1 sec
+unsigned long LCDPreviousMillis = 0;
 //------------------------------------------------Arduino stuff
 
 void setup()
@@ -64,9 +67,9 @@ void setup()
 	rgbLedSetup();
 
 	//Startup mp3
-	setMp3Volume(15); //defult 26
+	setMp3Volume(0); //defult 26
 	loopMp3(false);
-	//StartNewPlayback(1);
+	StartNewPlayback(1);
 }
 
 void loop()
@@ -77,14 +80,15 @@ void loop()
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
 
-	if (mp3IsPlayering)
+	if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
 	{
 		LCDUpdateTime();
+		LCDPreviousMillis = millis();
 	}
 
 	//lightShow01(350, 60);
 	//lightShow02(350, 60);
-	lightShow03(120);
+	//lightShow03(120);
 }
 
 //------------------------------------------------Light Code
@@ -338,6 +342,7 @@ void lightShow03(int loopSpeed) // mix first and 2ed led with some rng
 	byte i = 0; //loop controller
 	unsigned long ledPreviousMillis = 0;
 
+	//controls light loop
 	enum lightState
 	{
 		state1,
@@ -419,6 +424,9 @@ void lightShow03(int loopSpeed) // mix first and 2ed led with some rng
 
 	}
 
+	setColor1(0,0,0);
+	setColor2(0,0,0);
+
 	//for (i; i < 20; i++)
 	//{
 	//	setColor1(rng1, rng2, rng3);
@@ -455,7 +463,6 @@ void initLCD()
 	lcd.print(millis());
 }
 
-//TODO review
 void LCDUpdateText(byte song)
 {
 	song = song - 1; //The mp3 player does not accept '0' as a song
@@ -481,24 +488,24 @@ void LCDUpdateTime()
 	{
 		lcd.setCursor(0, 3);
 		lcd.print(F("Song is looping"));
-		delay(1000); //avoid lcd overload
+		//delay(1000); //avoid lcd overload
 	}
 	else
 	{
-		delay(1000); //wait one sec then update timer
+		//delay(1000); //wait one sec then update timer
 		lcd.setCursor(0, 3);
-
 		timeCodeSec++;
+
 		if (timeCodeSec > 59) //60 secs = 1 min
 		{
-			//So here's fun bug:
+			//So here's a fun bug:
 			//just because you reset a var in the program
 			//doesn't mean the lcd will update as you expect
 			//if the var has two digets ex 22 and set the var to 0
 			//the lcd will then display 02 because the lcd only updates the blocks it need
 			//not the blocks after it
 			lcd.setCursor(3, 3);
-			lcd.print(F("               ")); //print a buntch of white space to make the lcd nice again
+			lcd.print(F("               ")); //print a bunch of white space to make the lcd look nice again
 			lcd.setCursor(0, 3);
 
 			timeCodeSec = 0;

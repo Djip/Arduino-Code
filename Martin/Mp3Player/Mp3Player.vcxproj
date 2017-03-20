@@ -84,14 +84,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SimpleTimer.h">
-      <FileType>CppCode</FileType>
-    </ClInclude>
     <ClInclude Include="Song.h" />
     <ClInclude Include="__vm\.Mp3Player.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SimpleTimer.cpp" />
     <ClCompile Include="Song.cpp" />
   </ItemGroup>
   <PropertyGroup>
