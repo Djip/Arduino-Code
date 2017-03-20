@@ -3,7 +3,7 @@
 #include "Song.h"
 #include <DFRobotDFPlayerMini.h>
 #include <LiquidCrystal.h>
-#include <TimedAction.h>
+//#include <TimedAction.h>
 
 //#################-Lightshow settings
 const byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
@@ -69,7 +69,7 @@ void setup()
 	//Startup mp3
 	setMp3Volume(0); //defult 26
 	loopMp3(false);
-	StartNewPlayback(1);
+	//StartNewPlayback(1);
 }
 
 void loop()
@@ -80,11 +80,11 @@ void loop()
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
 
-	if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
-	{
-		LCDUpdateTime();
-		LCDPreviousMillis = millis();
-	}
+	//if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
+	//{
+	//	LCDUpdateTime();
+	//	LCDPreviousMillis = millis();
+	//}
 
 	//lightShow01(350, 60);
 	//lightShow02(350, 60);
