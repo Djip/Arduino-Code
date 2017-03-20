@@ -76,7 +76,7 @@ EthernetClient client;
 // char server[] = "http://citybuilder.azurewebsites.net/sample/hello";
 
 // When not using Azure server, we set the ip of the server static, wich we will connect to.
-IPAddress server(192, 168, 1, 108);
+IPAddress server(212,10,62,216);
 
 // Using this if we dont want to use dhcp to get ip for the Arduion board.
 IPAddress ip(192, 168, 1, 135);
@@ -96,6 +96,7 @@ void setup()
 	initMP3();
 	initLCD();
 	rgbLedSetup();
+	initNet();
 
 	//Startup mp3
 	setMp3Volume(0); //defult 26
@@ -688,12 +689,13 @@ void initNet()
 	Serial.println("We are inside setup method for NETCODE!");
 
 	// Just starting the ethernet port and setting mac, ip, gateway, subnetmask.
-	Ethernet.begin(mac, ip, gateway, subnet);
+	//Ethernet.begin(mac, ip, gateway, subnet);
+	connection = Ethernet.begin(mac);
 
 	// If we where using dhcp we could print out the status of the lease.
 	// This should be used where we begin the Ethernet.begin like this connection = Ethernet.begin();
 	// returns state of connection 1 for succes 0 for failure
-	// Serial.println(connection);
+	Serial.println(connection);
 
 	// Letting the Ethernet port finishing initializing before we try to do the connection. 
 	delay(1000);
@@ -725,7 +727,7 @@ void initNet()
 // The connection method when we want to connect to the server, is called inside setup().
 int connectToServer() {
 
-	if (client.connect(server, 1000)) {
+	if (client.connect(server, 9000)) {
 
 		// Trying to sent method string to the server.
 		byte bytesSent = client.print(methodStr);
