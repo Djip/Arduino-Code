@@ -681,6 +681,17 @@ void loopMp3(bool loop)
 	}
 }
 
+void nextSong()
+{
+	mp3Player.next();
+}
+
+void previousSong()
+{
+	mp3Player.previous();
+}
+
+
 //------------------------------------------------Net Code
 
 void initNet()
