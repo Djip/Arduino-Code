@@ -17,10 +17,14 @@ HCWS2812 hcws2812;
 // and instead of digitalWrite, you should use the analogWrite command
 
 // --------------------------------------------------------------------------- Motors
+Servo servo;
+
 int motor[] = {5, 6};
+int pos = 0;
 
 // --------------------------------------------------------------------------- Setup
 void setup() {
+  servo.attach(10);
   pinMode(10, OUTPUT); // change this to 53 on a mega  // don't follow this!!
   digitalWrite(10, HIGH);
   Serial.begin(9600);
@@ -55,6 +59,18 @@ void loop() {
   delay(300);
 */
 
+/*
+  for (pos = 60; pos <= 120; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    servo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  for (pos = 120; pos >= 60; pos -= 1) { // goes from 180 degrees to 0 degrees
+    servo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  */
+drive_backward();
   Serial.println("Type 1 to drive forward, 2 for backwards and 3 to stop");
   int number = Serial.parseInt();
   switch (number) {
@@ -82,7 +98,7 @@ void motor_stop() {
 }
 
 void drive_forward() {
-  analogWrite(motor[0], 50);
+  analogWrite(motor[0], 200);
 }
 
 void drive_backward() {
