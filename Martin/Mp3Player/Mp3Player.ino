@@ -91,7 +91,8 @@ IPAddress subnet(255, 255, 255, 0);
 
 
 // The string of methods that this arduino is holding, and should sent to the server.
-String methodStr = "RockOn#test123,0,0,1,0,,#test321,0,0,1,0,Vol,5";
+				 //"name#mothodName,default,min,max,current,,"
+String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,";
 
 //------------------------------------------------Arduino stuff
 
@@ -105,7 +106,7 @@ void setup()
 	initNet();
 
 	//Startup mp3
-	setMp3Volume(0); //defult 26
+	setMp3Volume(26); //defult 26
 	loopMp3(false);
 	//StartNewPlayback(1);
 }
@@ -125,6 +126,8 @@ void loop()
 	//3: rebind fail
 	//4: rebind success
 	byte result = Ethernet.maintain();
+
+	listenForCommand();
 
 	//if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
 	//{
@@ -586,6 +589,7 @@ void printDetail(uint8_t type, int value){
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
 	  mp3IsPlayering = false; //stop updating the time code
+	  nextSong(); //we can't control this from the app
       break;
     case DFPlayerError:
       Serial.print(F("DFPlayerError:"));
@@ -706,13 +710,13 @@ void initNet()
 	Serial.println("We are inside setup method for NETCODE!");
 
 	// Just starting the ethernet port and setting mac, ip, gateway, subnetmask.
-	//Ethernet.begin(mac, ip, gateway, subnet);
-	connection = Ethernet.begin(mac);
+	Ethernet.begin(mac, ip, gateway, subnet);
+	//connection = Ethernet.begin(mac);
 
 	// If we where using dhcp we could print out the status of the lease.
 	// This should be used where we begin the Ethernet.begin like this connection = Ethernet.begin();
 	// returns state of connection 1 for succes 0 for failure
-	Serial.println(connection);
+	//Serial.println(connection);
 
 	// Letting the Ethernet port finishing initializing before we try to do the connection. 
 	delay(1000);
@@ -758,5 +762,71 @@ int connectToServer() {
 		// Returningn status on the connection.
 		return 0;
 
+	}
+}
+
+
+void listenForCommand()
+{
+	if (client.available())
+	{
+		// Reads for 5 sec from server.
+		client.setTimeout(5000);
+		Serial.println("Reading");
+		String methodToCall = client.readString();
+
+		// Removes first 2 char in string (Blanks from server)
+		methodToCall.remove(0, 2);
+		Serial.println("Method: " + methodToCall);
+
+		//find the , and use it split the method name from the method data
+		byte commaIndex = 0;
+		String methodName = "";
+		int methodData = 0;
+		char m[20];
+		methodToCall.toCharArray(m,20);
+
+		for (int i = 0; i < 20; i++)
+		{
+			if (m[i] == ',')
+			{
+				commaIndex = i;
+				break;
+			}
+		}
+
+		methodName = methodToCall.substring(0, commaIndex - 1);
+		methodData = methodToCall.substring(commaIndex).toInt();
+
+		//Serial.print("NAME: "), Serial.print(methodName), Serial.print(" "), Serial.print("DATA: "), Serial.println(methodData);
+
+		if (methodName.equalsIgnoreCase("startmp3")) // Check Method
+		{
+			StartNewPlayback(1);
+		}
+		else if (methodName.equalsIgnoreCase("volume")) // Check Method
+		{
+			setMp3Volume(methodData);
+		}
+		else if (methodName.equalsIgnoreCase("loopSong")) // Check Method
+		{
+			if (methodData == 1)
+			{
+				loopMp3(true);
+			}
+			else
+			{
+				loopMp3(false);
+			}
+		}
+		methodToCall = "";
+	}
+	// Close connecting if not connect    
+	if (!client.connected())
+	{
+		Serial.println("disconnecting.");
+		client.stop();
+		for (;;)
+			;
 	}
 }
