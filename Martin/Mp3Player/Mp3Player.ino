@@ -23,19 +23,19 @@ void printDetail(uint8_t type, int value);
 bool mp3IsPlayering = false, mp3IsLooping = false;
 
 //#################-Songs
-Song songs[3] = 
+Song songs[4] = 
 {
 	{
-		"Spyro A Heros Tail", //name
-		"Coastal Remains", //info / also used for long names
-		2, //mins
-		56 //secs
+		"Lightning Strikes", //name
+		"Again - Metal Squad", //info / also used for long names
+		5, //mins
+		36 //secs
 	},
 	{
-		"Rock And Roll",
-		"Mcdonalds",
-		2,
-		22
+		"Rayman 2",
+		"Waterski Challenge",
+		5,
+		29
 	},
 	{
 		"Rayman 2",
@@ -43,6 +43,12 @@ Song songs[3] =
 		3,
 		39
 	},
+	{
+		"Spyro A Heros Tail",
+		"Coastal Remains",
+		2,
+		56
+	}
 };
 
 //#################-LCD
