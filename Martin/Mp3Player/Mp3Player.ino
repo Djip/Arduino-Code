@@ -1,3 +1,6 @@
+#include <util.h>
+#include <EthernetUdp2.h>
+#include <Ethernet2.h>
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 #include "Song.h"
@@ -5,10 +8,10 @@
 #include <LiquidCrystal.h>
 #include <Dhcp.h>
 #include <Dns.h>
-#include <Ethernet.h>
+//#include <Ethernet.h>
 #include <EthernetClient.h>
 #include <EthernetServer.h>
-#include <EthernetUdp.h>
+//#include <EthernetUdp.h>
 
 //#################-Lightshow settings
 const byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
@@ -73,7 +76,7 @@ unsigned long LCDPreviousMillis = 0;
 int connection;
 
 // Defining the mac address to use for the board.
-byte mac[] = { 0xAF, 0xEB, 0xCA, 0xDB, 0xFA, 0xDE };
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0x52, 0xFE };
 
 // The client wich will connect to the server.
 EthernetClient client;
@@ -106,9 +109,9 @@ void setup()
 	initNet();
 
 	//Startup mp3
-	setMp3Volume(26); //defult 26
+	setMp3Volume(15); //defult 26
 	loopMp3(false);
-	//StartNewPlayback(1);
+	//StartNewPlayback(2);
 }
 
 void loop()
