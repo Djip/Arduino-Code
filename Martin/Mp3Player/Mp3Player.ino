@@ -3,7 +3,12 @@
 #include "Song.h"
 #include <DFRobotDFPlayerMini.h>
 #include <LiquidCrystal.h>
-//#include <TimedAction.h>
+#include <Dhcp.h>
+#include <Dns.h>
+#include <Ethernet.h>
+#include <EthernetClient.h>
+#include <EthernetServer.h>
+#include <EthernetUdp.h>
 
 //#################-Lightshow settings
 const byte rgbLed[] = {2,3,4, 5,6,7}; //order is R,G,B,R,G,B 
@@ -18,19 +23,19 @@ void printDetail(uint8_t type, int value);
 bool mp3IsPlayering = false, mp3IsLooping = false;
 
 //#################-Songs
-Song songs[3] = 
+Song songs[4] = 
 {
 	{
-		"Spyro A Heros Tail", //name
-		"Coastal Remains", //info / also used for long names
-		2, //mins
-		56 //secs
+		"Lightning Strikes", //name
+		"Again - Metal Squad", //info / also used for long names
+		5, //mins
+		36 //secs
 	},
 	{
-		"Rock And Roll",
-		"Mcdonalds",
-		2,
-		22
+		"Rayman 2",
+		"Waterski Challenge",
+		5,
+		29
 	},
 	{
 		"Rayman 2",
@@ -38,6 +43,12 @@ Song songs[3] =
 		3,
 		39
 	},
+	{
+		"Spyro A Heros Tail",
+		"Coastal Remains",
+		2,
+		56
+	}
 };
 
 //#################-LCD
@@ -56,6 +67,33 @@ byte timeCodeMin, timeCodeSec; //used for time code
 byte currentSong;
 const int LCDUpdateIntaval = 1000; // 1 sec
 unsigned long LCDPreviousMillis = 0;
+
+//#################-Net
+// if we use dhcp to get IP, then we can use this connection to display the result of the dhcp request.
+int connection;
+
+// Defining the mac address to use for the board.
+byte mac[] = { 0xAF, 0xEB, 0xCA, 0xDB, 0xFA, 0xDE };
+
+// The client wich will connect to the server.
+EthernetClient client;
+
+// When we is going to send to our Azure server we will use this server variable instead of the IP.
+// char server[] = "http://citybuilder.azurewebsites.net/sample/hello";
+
+// When not using Azure server, we set the ip of the server static, wich we will connect to.
+IPAddress server(212,10,62,216);
+
+// Using this if we dont want to use dhcp to get ip for the Arduion board.
+IPAddress ip(192, 168, 1, 135);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+
+
+// The string of methods that this arduino is holding, and should sent to the server.
+				 //"name#mothodName,default,min,max,current,,"
+String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,";
+
 //------------------------------------------------Arduino stuff
 
 void setup()
@@ -65,9 +103,10 @@ void setup()
 	initMP3();
 	initLCD();
 	rgbLedSetup();
+	initNet();
 
 	//Startup mp3
-	setMp3Volume(0); //defult 26
+	setMp3Volume(26); //defult 26
 	loopMp3(false);
 	//StartNewPlayback(1);
 }
@@ -79,6 +118,16 @@ void loop()
 	{
 		printDetail(mp3Player.readType(), mp3Player.read()); //Print the detail message from DFPlayer to handle different errors and states.
 	}
+
+	//renews the IP lease - returning a byte with the following:
+	//0: nothing happened
+	//1: renew failed
+	//2: renew success
+	//3: rebind fail
+	//4: rebind success
+	byte result = Ethernet.maintain();
+
+	listenForCommand();
 
 	//if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
 	//{
@@ -540,6 +589,7 @@ void printDetail(uint8_t type, int value){
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
 	  mp3IsPlayering = false; //stop updating the time code
+	  nextSong(); //we can't control this from the app
       break;
     case DFPlayerError:
       Serial.print(F("DFPlayerError:"));
@@ -641,5 +691,142 @@ void loopMp3(bool loop)
 	}
 }
 
+void nextSong()
+{
+	mp3Player.next();
+}
+
+void previousSong()
+{
+	mp3Player.previous();
+}
+
+
 //------------------------------------------------Net Code
 
+void initNet()
+{
+	// Checking that we are inside setup.
+	Serial.println("We are inside setup method for NETCODE!");
+
+	// Just starting the ethernet port and setting mac, ip, gateway, subnetmask.
+	Ethernet.begin(mac, ip, gateway, subnet);
+	//connection = Ethernet.begin(mac);
+
+	// If we where using dhcp we could print out the status of the lease.
+	// This should be used where we begin the Ethernet.begin like this connection = Ethernet.begin();
+	// returns state of connection 1 for succes 0 for failure
+	//Serial.println(connection);
+
+	// Letting the Ethernet port finishing initializing before we try to do the connection. 
+	delay(1000);
+
+	Serial.println("Trying to connect...");
+	// Connecting to the server.
+	int connectionStatus = connectToServer();
+
+	if (connectionStatus == 1) {
+
+		Serial.println("connected");
+
+	}
+	else if (connectionStatus == 0) {
+		Serial.println("connection failed");
+	}
+
+	// Checking if the client connection is still open to the server, else we close it.
+	if (client.available())
+	{
+		Serial.println("There is still connection to the server");
+	}
+	else {
+		client.stop();
+		Serial.println("Connection Terminated");
+	}
+}
+
+// The connection method when we want to connect to the server, is called inside setup().
+int connectToServer() {
+
+	if (client.connect(server, 9000)) {
+
+		// Trying to sent method string to the server.
+		byte bytesSent = client.print(methodStr);
+
+		// Returningn status on the connection.
+		return 1;
+
+	}
+	else {
+
+		// Returningn status on the connection.
+		return 0;
+
+	}
+}
+
+
+void listenForCommand()
+{
+	if (client.available())
+	{
+		// Reads for 5 sec from server.
+		client.setTimeout(5000);
+		Serial.println("Reading");
+		String methodToCall = client.readString();
+
+		// Removes first 2 char in string (Blanks from server)
+		methodToCall.remove(0, 2);
+		Serial.println("Method: " + methodToCall);
+
+		//find the , and use it split the method name from the method data
+		byte commaIndex = 0;
+		String methodName = "";
+		int methodData = 0;
+		char m[20];
+		methodToCall.toCharArray(m,20);
+
+		for (int i = 0; i < 20; i++)
+		{
+			if (m[i] == ',')
+			{
+				commaIndex = i;
+				break;
+			}
+		}
+
+		methodName = methodToCall.substring(0, commaIndex - 1);
+		methodData = methodToCall.substring(commaIndex).toInt();
+
+		//Serial.print("NAME: "), Serial.print(methodName), Serial.print(" "), Serial.print("DATA: "), Serial.println(methodData);
+
+		if (methodName.equalsIgnoreCase("startmp3")) // Check Method
+		{
+			StartNewPlayback(1);
+		}
+		else if (methodName.equalsIgnoreCase("volume")) // Check Method
+		{
+			setMp3Volume(methodData);
+		}
+		else if (methodName.equalsIgnoreCase("loopSong")) // Check Method
+		{
+			if (methodData == 1)
+			{
+				loopMp3(true);
+			}
+			else
+			{
+				loopMp3(false);
+			}
+		}
+		methodToCall = "";
+	}
+	// Close connecting if not connect    
+	if (!client.connected())
+	{
+		Serial.println("disconnecting.");
+		client.stop();
+		for (;;)
+			;
+	}
+}
