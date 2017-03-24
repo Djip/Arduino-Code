@@ -85,7 +85,7 @@ EthernetClient client;
 // char server[] = "http://citybuilder.azurewebsites.net/sample/hello";
 
 // When not using Azure server, we set the ip of the server static, wich we will connect to.
-IPAddress server(212,10,62,216);
+IPAddress server(192, 168, 1, 100);
 
 // Using this if we dont want to use dhcp to get ip for the Arduion board.
 IPAddress ip(192, 168, 1, 135);
@@ -95,7 +95,8 @@ IPAddress subnet(255, 255, 255, 0);
 
 // The string of methods that this arduino is holding, and should sent to the server.
 				 //"name#mothodName,default,min,max,current,,"
-String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,";
+//String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,";
+String methodStr = "RockOn#startlight,0,0,1,0,,";
 
 //------------------------------------------------Arduino stuff
 
@@ -130,6 +131,7 @@ void loop()
 	//4: rebind success
 	byte result = Ethernet.maintain();
 
+	client.print("1\n");
 	listenForCommand();
 
 	//if (mp3IsPlayering && (unsigned long)(millis() - LCDPreviousMillis) > LCDUpdateIntaval)
@@ -592,7 +594,6 @@ void printDetail(uint8_t type, int value){
       Serial.print(value);
       Serial.println(F(" Play Finished!"));
 	  mp3IsPlayering = false; //stop updating the time code
-	  nextSong(); //we can't control this from the app
       break;
     case DFPlayerError:
       Serial.print(F("DFPlayerError:"));
@@ -713,7 +714,8 @@ void initNet()
 	Serial.println("We are inside setup method for NETCODE!");
 
 	// Just starting the ethernet port and setting mac, ip, gateway, subnetmask.
-	Ethernet.begin(mac, ip, gateway, subnet);
+	//Ethernet.begin(mac, ip, gateway, subnet);
+	Ethernet.begin(mac);
 	//connection = Ethernet.begin(mac);
 
 	// If we where using dhcp we could print out the status of the lease.
@@ -742,10 +744,6 @@ void initNet()
 	{
 		Serial.println("There is still connection to the server");
 	}
-	else {
-		client.stop();
-		Serial.println("Connection Terminated");
-	}
 }
 
 // The connection method when we want to connect to the server, is called inside setup().
@@ -754,7 +752,7 @@ int connectToServer() {
 	if (client.connect(server, 9000)) {
 
 		// Trying to sent method string to the server.
-		byte bytesSent = client.print(methodStr);
+		byte bytesSent = client.print(methodStr + "\n");
 
 		// Returningn status on the connection.
 		return 1;
@@ -801,7 +799,7 @@ void listenForCommand()
 		methodName = methodToCall.substring(0, commaIndex - 1);
 		methodData = methodToCall.substring(commaIndex).toInt();
 
-		//Serial.print("NAME: "), Serial.print(methodName), Serial.print(" "), Serial.print("DATA: "), Serial.println(methodData);
+		Serial.print("NAME: "), Serial.print(methodName), Serial.print(" "), Serial.print("DATA: "), Serial.println(methodData);
 
 		if (methodName.equalsIgnoreCase("startmp3")) // Check Method
 		{
@@ -821,6 +819,10 @@ void listenForCommand()
 			{
 				loopMp3(false);
 			}
+		}
+		else if (methodName.equalsIgnoreCase("startlight"))
+		{
+			lightShow03(120);
 		}
 		methodToCall = "";
 	}
