@@ -95,8 +95,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 // The string of methods that this arduino is holding, and should sent to the server.
 				 //"name#mothodName,default,min,max,current,,"
-//String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,";
-String methodStr = "RockOn#startlight,0,0,1,0,,";
+String methodStr = "RockOn#startmp3,0,0,1,0,,#volume,26,0,30,26,,#loopSong,0,0,1,0,,#startlight,0,0,1,0,,";
 
 //------------------------------------------------Arduino stuff
 
@@ -796,14 +795,21 @@ void listenForCommand()
 			}
 		}
 
-		methodName = methodToCall.substring(0, commaIndex - 1);
-		methodData = methodToCall.substring(commaIndex).toInt();
+		methodName = methodToCall.substring(0, commaIndex);
+		methodData = methodToCall.substring(commaIndex + 1).toInt(); // +1 to behind the comma
 
 		Serial.print("NAME: "), Serial.print(methodName), Serial.print(" "), Serial.print("DATA: "), Serial.println(methodData);
 
 		if (methodName.equalsIgnoreCase("startmp3")) // Check Method
 		{
-			StartNewPlayback(1);
+			if (methodData == 0)
+			{
+				mp3Player.stop();
+			}
+			else
+			{
+				StartNewPlayback(2);
+			}
 		}
 		else if (methodName.equalsIgnoreCase("volume")) // Check Method
 		{
@@ -822,7 +828,12 @@ void listenForCommand()
 		}
 		else if (methodName.equalsIgnoreCase("startlight"))
 		{
-			lightShow03(120);
+			for (int i = 0; i < 30; i++) //run the light show a few times
+			{
+				lightShow01(350, 60);
+				lightShow02(350, 60);
+				lightShow03(120);
+			}
 		}
 		methodToCall = "";
 	}
