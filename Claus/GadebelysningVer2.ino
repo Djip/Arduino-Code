@@ -1,14 +1,16 @@
 /* Gadebelysnings System
- *  Use a Photoresistor to monitor lightstrength
+ *  Use Photoresistors to monitor lightstrength
  *  and turn LEDs On and Off 
  *  Dev: Claus Olsen // Date 16/2-2017 //
  */
-
-#include <Dhcp.h>
-#include <Dns.h>
+// #include <Dhcp.h>
+// #include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetClient.h>
 #include <EthernetServer.h>
+#include <SPI.h>
+
+int connection;
 
 // Enter a MAC address for your controller below.
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
@@ -16,20 +18,19 @@ byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 // Initialize the Ethernet client
 EthernetClient client;
 
-
-// set the ip of the server static
 IPAddress server(192, 168, 1, 100);
-// Using this if we dont want to use dhcp
 IPAddress ip(192, 168, 1, 15);
 IPAddress gateway(192,168,1, 1);
 IPAddress subnet(255, 255, 255, 0);
-
 
 //Constants
 const int photoResistor1 = A0;
 const int photoResistor2 = A1;
 const int photoResistor3 = A2;
 const int photoResistor4 = A3;
+
+// solskin = 1023 - værdi falder til 546 når hånden er over Photoresistor
+const int defaultValue = 520;
 
 const int lampe1 = 2;
 const int lampe2 = 3;
@@ -43,7 +44,7 @@ int photoResistorValue4;
 
 long randomNumber;
 
-String methodStr = "gadelamper#turnAllOn,0,0,1,0,,#turnAllOff,0,0,1,0,,#turnOneOn,0,0,1,0,1,5";
+String methodStr = "GadeLamper#Turn on/off lights,0,0,1,0,,";
 
 // put your setup code here, to run once:
 void setup() {
@@ -52,25 +53,20 @@ void setup() {
   // serial communications
   Serial.begin(9600);
 
- // start the Ethernet connection:
   Ethernet.begin(mac);
-  // Letting the Ethernet port finishing initializing before we try to do the connection. 
+ 
   delay(1000);
 
   Serial.println("Trying to connect...");
   // Connecting to the server.
   int connectionStatus = connectToServer();
-  if(connectionStatus == 1) 
-    {
+  if(connectionStatus == 1)     {
       Serial.println("connected");
     } 
   else if(connectionStatus == 0) 
-    {
-      Serial.println("connection failed");
+    {      Serial.println("connection failed");
     }
-  
-  // print my local IP address:
-  printIPAddress();
+
   
   pinMode(lampe1, OUTPUT);
   pinMode(lampe2, OUTPUT);
@@ -83,64 +79,55 @@ void setup() {
   pinMode(photoResistor3, INPUT);
   pinMode(photoResistor4, INPUT);
  
-  randomSeed(42);
+ // randomSeed(42);
 }
 
 void loop() {
-  
   // put your main code here, to run repeatedly:
-  
-    
-  photoResistorValue1 = analogRead(photoResistor1);
-  photoResistorValue2 = analogRead(photoResistor2);
-  photoResistorValue3 = analogRead(photoResistor3);
-  photoResistorValue4 = analogRead(photoResistor4);
- 
+
+  //renews the IP lease - returning a byte with the following:
+  //0: nothing happened
+  //1: renew failed
+  //2: renew success
+  //3: rebind fail
+  //4: rebind success
   byte result = Ethernet.maintain(); 
-
-  String methodToCall;
-
-  if (client.available()) 
-    {
-      // Reads for 5 sec from server.
-      client.setTimeout(5000);
-      Serial.println("Reading");
-      methodToCall = client.readString();
-
-      // Removes first 2 char in string (Blanks from server)
-      methodToCall.remove(0,2);
-      Serial.println("Method: " + methodToCall);
-      
-      if (methodToCall == "OpenAndClose,1") // Check Method
-        {
-          OpenAndClose();
-        }
-      else if (methodToCall == "Open,1,Open,1") // Check Method
-        {
-          Open();
-        }
-      else if (methodToCall == "Close,1,Close,1") // Check Method
-        {
-          Close();
-        }
-      methodToCall = "";
-    }
+  client.print("1\n");
+  methodFromServer();
+  
   // Close connecting if not connect    
   if (!client.connected()) 
+   
     {
       Serial.println("disconnecting.");
       client.stop();
       for(;;)
-      ;
+     ;
     }
-	
-  lightstrength();
   
+ // randomNumber = random(1,5);
+ // turnOneOn(randomNumber);
+ // digitalWrite(lampe2,HIGH);
+  //sensorLightStrength();
+ // delay(200);
+ // turnAllOff();
+ // delay(2000);
+ // turnAllOn();  
 }
 
-// Photoresistor turn lamps on and off
-void lightstrength(){
-	if(photoResistorValue1 > 550)
+// Method running on Arduino only
+// photoResistor value determines if lights is On or Off
+void sensorLightStrength()
+{
+  photoResistorValue1 = analogRead(photoResistor1);  
+  photoResistorValue2 = analogRead(photoResistor2);
+  photoResistorValue3 = analogRead(photoResistor3);
+  photoResistorValue4 = analogRead(photoResistor4);
+ 
+  // (Hvis sollys styrke) > (My defaultvalue) 
+  // Så sluk for lamper
+  // Ellers tænd lamper
+  if(photoResistorValue1 > defaultValue)
   {
     digitalWrite(lampe1,LOW);
   }
@@ -150,7 +137,7 @@ void lightstrength(){
     digitalWrite(lampe1,HIGH);
   }  
   
-  if(photoResistorValue2 > 550)
+  if(photoResistorValue2 > defaultValue)
   {
     digitalWrite(lampe2,LOW);
   }
@@ -160,7 +147,7 @@ void lightstrength(){
     digitalWrite(lampe2,HIGH);
   }  
 
-  if(photoResistorValue3 > 550)
+  if(photoResistorValue3 > defaultValue)
   {
     digitalWrite(lampe3,LOW);
   }
@@ -170,7 +157,7 @@ void lightstrength(){
     digitalWrite(lampe3,HIGH);
   }  
 
-  if(photoResistorValue4 > 550)
+  if(photoResistorValue4 > defaultValue)
   {
     digitalWrite(lampe4,LOW);
   }
@@ -178,48 +165,42 @@ void lightstrength(){
   {
     Serial.println(photoResistorValue4);
     digitalWrite(lampe4,HIGH);
-  }   
-  delay(500); 
+  }     
+  delay(1000);
 }
 
-// write my ip adr to seriel monitor
-void printIPAddress()
-{
-  Serial.print("My IP address: ");
-  for (byte thisByte = 0; thisByte < 4; thisByte++) {
-    // print the value of each byte of the IP address:
-    Serial.print(Ethernet.localIP()[thisByte], DEC);
-    Serial.print(".");
-  }
 
-  Serial.println();
-}
 
-// turn all lamps off
+// Method turn all lamps off
 void turnAllOff()
 {
+
+  Serial.println("Turning off lights");
     digitalWrite(lampe1,LOW);
     digitalWrite(lampe2,LOW);
     digitalWrite(lampe3,LOW);
-    digitalWrite(lampe4,LOW);    
+    digitalWrite(lampe4,LOW);   
 }
 
-// turn all lamps on
+// Method turn all lamps On
 void turnAllOn()
 {
+  Serial.println("Turning on lights");
+  
     digitalWrite(lampe1,HIGH);
     digitalWrite(lampe2,HIGH);
     digitalWrite(lampe3,HIGH);
-    digitalWrite(lampe4,HIGH);    
+    digitalWrite(lampe4,HIGH);   
 }
 
-// turn 1 lamp on
+
+// Method turn a single selected lamp On
 void turnOneOn(int tal)
 {
   switch(tal)
   {
     case 1:
-    digitalWrite(lampe1,HIGH);
+    digitalWrite(lampe1,HIGH);    
     break;
     case 2:
     digitalWrite(lampe2,HIGH);
@@ -234,6 +215,71 @@ void turnOneOn(int tal)
   delay(500);
 }
 
+int connectToServer() 
+{ 
+  if (client.connect(server, 9000)) 
+    {
+      // Trying to sent method string to the server.
+      byte bytesSent = client.print(methodStr + "\n");
+      // Returningn status on the connection.
+      return 1;
+    } 
+  else 
+    {
+      // Returningn status on the connection.
+      return 0; 
+    }
+}
 
+void methodFromServer()
+{
+  String methodToCall;  
+
+  //if (client.available())
+  //{
+    // Reads for 5 sec from server.
+    client.setTimeout(5000);
+    Serial.println("Reading");
+    methodToCall = client.readString();
+
+    // Removes first 2 char in string (Blanks from server)
+    methodToCall.remove(0, 2);
+    Serial.println("Method: " + methodToCall);
+    
+    //find the , and use it split the method name from the method data
+    /*
+    byte commaIndex = 0;
+    String methodName = "";
+    int methodData = 0;
+    char m[20];
+    methodToCall.toCharArray(m,20);
+
+    for (int i = 0; i < 20; i++)
+    {
+      if (m[i] == ',')
+      {
+        commaIndex = i;
+        break;
+      }
+    }
+
+    methodName = methodToCall.substring(0, commaIndex - 1);
+    methodData = methodToCall.substring(commaIndex).toInt();
+*/
+    if (methodToCall == "Turn on/off lights,0") // Check Method
+    {
+      turnAllOff();
+    }
+    else if (methodToCall == "Turn on/off lights,1") // Check Method
+    {
+      turnAllOn();
+    }
+    else if (methodToCall.equalsIgnoreCase("turnOneOn")) // Check Method
+    {
+      //turnOneOn(methodData);
+    }
+    methodToCall = "";
+  //}
+}
 
 
